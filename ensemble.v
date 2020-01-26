@@ -81,3 +81,11 @@ Definition union {A: Type} (e e': Ensemble A) := match e, e' with
 |finEnsemble s, finEnsemble s' => finEnsemble (s ++ s')
 |a, b => infinEnsemble (uniong a b)
 end.
+
+Lemma uniong_correct {A: Type} (e e': Ensemble A): union e e' ~= infinEnsemble (uniong e e').
+  case: e => // e; case: e' => // e'; split => /= [/nth_safeQ-[sum]|[y <-]];
+    first by case/seqpos_splitP: (sum) => jk -> <- ; [exists (inl jk) | exists (inr jk)].
+  apply/nth_safeQ; exists (seqpos_unsplit y).
+  case: y => /= jk; rewrite !(nth_safe_is_nth x) nth_cat /=; first by case: jk => /= n ->.
+  by rewrite ltnNge leq_addr -addnBAC //= subnn add0n.
+Qed.

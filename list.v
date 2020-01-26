@@ -70,6 +70,22 @@ split.
   case => [->|/IHs-[[n le] eqnx]]; first by exists ord0.
   by unshelve eexists (Ordinal (m:=n.+1) _).
 
-- move => []; elim/(size_ind s) => {s} x' s; first by left.
-  by move => -[n le] /= Hrec /Hrec; right.
+- by move => []; elim/(size_ind s) => {s} [x' s | x' s [n le] /= Hrec /Hrec]; [left | right].
+Qed.
+
+Lemma nth_safeP {A: eqType} (s: seq A) (x: A): reflect (exists i, nth_safe s i = x) (x \in s).
+  apply/equivP; last exact/nth_safeQ.
+  by apply/inP.
+ Qed.
+
+Variant seqpos_split_spec {A: Type} {s s': seq A} (i: 'J_(s ++ s')) : 'J_s + 'J_s' -> bool -> Type :=
+  | SeqposSplitLo (j : 'J_s)  of nth_safe (s++s') i = nth_safe s  j     : seqpos_split_spec i (inl _ j) true
+  | SeqposSplitHi (k : 'J_s') of nth_safe (s++s') i = nth_safe s' k     : seqpos_split_spec i (inr _ k) false.
+
+Lemma seqpos_splitP {A: Type} {s s': seq A} (i : 'J_(s ++ s')) : seqpos_split_spec i (seqpos_split i) (i < size s).
+Proof.
+  have x: A by move: s s' i; do 2!case => [|?]; do 1?case.
+  set lt_i_m := i < (size s); rewrite /seqpos_split/split.
+  case: {-}_ lt_i_m / ltnP => jk;
+    constructor; rewrite !(nth_safe_is_nth x) nth_cat; by [rewrite jk|rewrite ltnNge jk].
 Qed.
