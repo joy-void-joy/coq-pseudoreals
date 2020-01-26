@@ -16,7 +16,7 @@ Fixpoint game_of_nat n := if n is m.+1 then {(game_of_nat m) | } else {|}.
 Fixpoint negative g := let: {l | r} := g in {map negative r | map negative l}.
 Definition game_of_Z z := let: res := game_of_nat (Z.abs_nat z) in if Z.geb 0 z then res else negative res.
 Coercion game_of_Z: Z >-> Game.
-Fixpoint plus (a b: Game): Game := let: ({al | ar}, {bl | br}) := (a, b) in {[:: (plus al b); (plus a bl)] | [:: (plus ar b); (plus a br)]}.
+Fixpoint plus (a b: Game): Game := let: ({al | ar}, {bl | br}) := (a, b) in {union (map (plus b) al) (map (plus a) bl) | union (map (plus b) ar) (map (plus a) bl)}.
 Definition x_plus_half (x: Z) := {x | x+1}.
 
 -
