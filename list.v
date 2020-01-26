@@ -4,8 +4,7 @@ Load reflect_rewrite.
 (* Since we work on non-decidable types, we will mainly use List.In *)
 Lemma inP {A: eqType} x (s: seq A): reflect (List.In x s) (x \in s).
 elim: s => [|a l /= Hrec]; first by constructor.
-rewrite in_cons eq_sym.
-by apply/orTP/predU1P.
+rewrite in_cons eq_sym; by apply/orTP/predU1P.
 Qed.
 
 Section SeqPos.
@@ -22,6 +21,9 @@ Proof. by case: s i => [[]|]//. Defined.
 Definition seqpos_split {A: Type} {s s': seq A}: 'J_(s ++ s') -> 'J_s + 'J_s'.
 Proof. by move => /(cast_ord (size_cat _ _))/split. Defined.
 
+Definition seqpos_unsplit {A: Type} {s s': seq A}: ('J_s + 'J_s') -> 'J_(s++s').
+Proof. by move => /unsplit/(cast_ord (sym_eq (size_cat _ _))). Defined.
+
 (* Useful lemma to assert that a list is not empty, based on a correct position of it *)
 Inductive uncons_spec {A: Type} (s: seq A) (i: 'J_s): forall x (s': seq A), 'J_(x::s') -> Type :=
 |uncons_spec_intro x s' (i': 'J_(x::s')) of 
@@ -33,10 +35,8 @@ Proof. case: s i => [[]|]//. Qed.
 Definition seq_pos0 {A: Type} (x: A) (s: seq A): 'J_(x::s).
 Proof. by move => /=; eexists ord0. Defined.
 
-Lemma seq_cons {A: Type} (x: A) (s: seq A): 'J_s -> 'J_(x::s).
-move => -[n le].
-eexists n.+1; apply/le.
-Defined.
+Definition seq_cons {A: Type} (x: A) (s: seq A): 'J_s -> 'J_(x::s).
+Proof. move => -[n le]; by eexists n.+1; apply/le. Defined.
 
 (* Another useful induction lemma. This one allows us to do an induction on both a sequence and a position of the sequence *)
 Lemma size_ind {A} s i (P: forall (s: seq A) (i: 'J_s), Type) : (forall x (s': seq A), P (x::s') (seq_pos0 x s')) -> (forall x s' j, P s' j -> P (x::s') (seq_cons x s' j)) -> P s i.
@@ -60,7 +60,7 @@ move: n => -[n p]; case: n s p => [|n]; (case; [done | idtac]).
 - move => x s le; apply: (nth_safe _ s); by exists n.
 Defined.
 
-Lemma nth_safe_is_nth {A: Type} (d: A) (s: seq A) (n: 'J_s): nth d s n = nth_safe s n.
+Lemma nth_safe_is_nth {A: Type} (d: A) (s: seq A) (n: 'J_s): nth_safe s n = nth d s n.
 Proof. elim/(size_ind s): n => {s}; by move => // x s -[] Hrec /=. Qed.
 
 Lemma nth_safeQ {A: Type} (s: seq A) (x: A): List.In x s <-> exists i, nth_safe s i = x.
