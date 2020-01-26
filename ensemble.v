@@ -18,6 +18,17 @@ Definition in_ensembleg {A: Type} (e: EnsembleG A) x := let: mkEnsembleG _ f := 
 Definition ensembleg_eq {A: Type} (e e': EnsembleG A) := forall x, in_ensembleg e x <-> in_ensembleg e' x.
 
 Definition mapg {T T': Type} (f: T -> T') (e:EnsembleG T): EnsembleG T' := let: (mkEnsembleG _ f') := e in mkEnsembleG _ (f \o f').
+
+Inductive cut_set {A: Type} (P: A -> Prop): Type :=
+|cut_intro (x: A) of P x.
+Definition cut_set_strip {A: Type} {P: A -> Prop} (x: cut_set P): A := let: cut_intro v _ := x in v.
+(* This might feel like a cause for concern. It is not, insofar that Coq restricts what type we are able to naive cut on.
+   Namely, we are not allowed to perform a naive cut on other ensembles.
+*)
+Definition naive_cut {A: Type} (P: A -> Prop) := mkEnsembleG A (cut_set_strip (P := P)).
+(* Which is why we require a hack to cut ensembles *)
+Definition ensembleg_cut {A: Type} (e: EnsembleG A) (P: A -> Prop) := naive_cut (fun x => P x /\ in_ensembleg e x).
+
 End EnsembleG.
 
 (*
