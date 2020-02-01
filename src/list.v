@@ -7,6 +7,9 @@ elim: s => [|a l /= Hrec]; first by constructor.
 rewrite in_cons eq_sym; by apply/orTP/predU1P.
 Qed.
 
+Fixpoint any_rec {A: Type } (P: A -> Prop) (s: seq A) := if s is x::s' then P x \/ any_rec P s' else False.
+Definition any {A: Type} := nosimpl (any_rec (A:=A)).
+
 Section SeqPos.
 (* This section focus on correctly assessed positions of a list. *)
 Definition seqpos {A: Type} (s: seq A) := 'I_(size s).
@@ -89,3 +92,12 @@ Proof.
   case: {-}_ lt_i_m / ltnP => jk;
     constructor; rewrite !(nth_safe_is_nth x) nth_cat; by [rewrite jk|rewrite ltnNge jk].
 Qed.
+
+Definition filter_ord {A: Type} p (s: seq A) (i: 'J_(filter p s)): 'J_s.
+Proof.
+  elim: s i => [[] //|x s IHs].
+  case/boolP: (p x) => /= [-> | /negbTE -> /IHs/(seq_cons x) //].
+  rewrite -cat1s => i.
+  case/seqpos_split: {-}(i) => [_|];
+  [by move => /=; eexists (ord0)|by (move => /IHs/(seq_cons x))].
+Defined.

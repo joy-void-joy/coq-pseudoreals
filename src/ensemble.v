@@ -17,6 +17,7 @@ Definition uniong {A: Type} (a b: EnsembleG A) := let: (mkEnsembleG _ f, mkEnsem
 Definition in_ensembleg {A: Type} (e: EnsembleG A) x := let: mkEnsembleG _ f := e in exists y, f y = x.
 Definition ensembleg_eq {A: Type} (e e': EnsembleG A) := forall x, in_ensembleg e x <-> in_ensembleg e' x.
 
+Definition anyg {A: Type} (P: A -> Prop) (e: EnsembleG A) := exists i, in_ensembleg e i /\ P i.
 Definition mapg {T T': Type} (f: T -> T') (e:EnsembleG T): EnsembleG T' := let: (mkEnsembleG _ f') := e in mkEnsembleG _ (f \o f').
 
 Inductive cut_set {A: Type} (P: A -> Prop): Type :=
@@ -61,6 +62,11 @@ end.
 Definition ensemble_eq {A: Type} (e e': Ensemble A) := forall x, in_ensemble e x <-> in_ensemble e' x.
 Notation "e ~= e'" := (ensemble_eq e e')(at level 90).
 
+Definition any_ensemble {A} (P: A -> Prop) (e: Ensemble A) := match e with
+|finEnsemble s => any P s
+|infinEnsemble e => anyg P e
+end.
+
 Section EquivalenceG.
 Lemma inEnsemblegQ {A: Type} (s: seq A) x : in_ensembleg s x <-> List.In x s.
 split.
@@ -68,16 +74,55 @@ split.
 - elim: s => // a s IHn [<-|/IHn-[[n le eqnx]]]; by [exists ord0 | eexists (Ordinal (m:=n.+1) _); exact: eqnx].
 Qed.
 
+Definition correctg {A A': Type} (f: Ensemble A -> Ensemble A') (e: Ensemble A)  := f e ~= f (infinEnsemble e).
+
+Lemma mapg_correct {A A'} (f: A -> A') (e: Ensemble A): correctg (map f) e.
+Proof.
+  case: e => // s x'.
+  split => /= [/nth_safeQ-[[m lt] <-]|[[m lt <-]]].
+  - have x: A by case: s lt; done.
+    exists (cast_ord (size_map _ _) (Ordinal lt)).
+    rewrite (nth_safe_is_nth x) (nth_safe_is_nth x') /=.
+    by apply/sym_eq/nth_map; by rewrite -(size_map f).
+
+  - apply/nth_safeQ.
+    exists (cast_ord (sym_eq (size_map _ _)) (Ordinal lt)).
+    have x: A by case: s lt; done.
+    rewrite (nth_safe_is_nth x) (nth_safe_is_nth x') /=.
+    by apply/nth_map.
+Qed.
+
 Lemma inEnsemblegP {A: eqType} (s: seq A) x : reflect (in_ensembleg s x) (x \in s).
 suff ref: reflect (List.In x s) (x \in s) by apply/(equivP ref)/(iff_sym (inEnsemblegQ _ _ )).
 exact: inP.
 Qed.
+Lemma anyg_correct {A} (P: A -> Prop) (e: Ensemble A) : any_ensemble P e <-> anyg P e.
+  case: e => // s.
+  split => [|[x [[i]] <-]].
+  - elim: s => // h s IHs.
+    case => [|/IHs-[x [[i eqx]]]];
+      first by exists h; split; by do? eexists ord0.
+    by exists x; split => //; unshelve eexists (seq_cons h s i); case: i eqx => /=.
+
+  - elim/(size_ind s): i => [{}x {}s|{}x {}s [n le] IHs /IHs];
+    by [left | right].
+Qed.
+
+Lemma inEnsembleg_correct {A: Type} (e: Ensemble A) x :  in_ensemble e x <-> in_ensembleg e x.
+case: e => [s|]; last by done.
+split => [|[i] <-].
+- elim: s => // a s IHs [<- /=|/IHs-[[n le] eqnx]]; by [exists ord0|eexists (Ordinal (m:=n.+1) _) => /=; exact: eqnx].
+- elim/(size_ind s): i => [{x s} x s|{x s} x s [n]]; by [left | right].
+Qed.
+
+Lemma inEnsemblegP {A: eqType} (s: seq A) x : reflect (in_ensembleg s x) (x \in s).
+Proof. apply/(equivP (inP _ _))/(inEnsembleg_correct s x). Qed.
 
 Lemma inEnsembleP {A: eqType} (s: seq A) x : reflect (in_ensemble s x) (x \in s).
 Proof. exact: inP. Qed.
 
 Lemma ensemble_irrevelance {A: Type} (s: seq A) : s ~= infinEnsemble s.
-Proof. split; by move => /inEnsemblegQ. Qed.
+Proof. split => [/inEnsembleg_correct //| ?]; exact/inEnsembleg_correct. Qed.
 
 Lemma emptyg_correct {A: Type}: [::] ~= infinEnsemble (emptyg (A := A)).
 Proof. split; by case. Qed.
