@@ -50,11 +50,6 @@ Coercion ensembleg_of_ensemble {A: Type} (e: Ensemble A): EnsembleG A := match e
 |infinEnsemble e => e
 end.
 
-Definition map {T T': Type} (f: T -> T') (e: Ensemble T): Ensemble T' := match e with
-|finEnsemble s => finEnsemble [seq f i | i <- s]
-|infinEnsemble e => infinEnsemble (mapg f e)
-end.
-
 Definition in_ensemble {A: Type} (e: Ensemble A) x := match e with
 |finEnsemble s => List.In x s
 |infinEnsemble e => in_ensembleg e x
@@ -62,18 +57,22 @@ end.
 Definition ensemble_eq {A: Type} (e e': Ensemble A) := forall x, in_ensemble e x <-> in_ensemble e' x.
 Notation "e ~= e'" := (ensemble_eq e e')(at level 90).
 
+Definition map {T T': Type} (f: T -> T') (e: Ensemble T): Ensemble T' := match e with
+|finEnsemble s => finEnsemble [seq f i | i <- s]
+|infinEnsemble e => infinEnsemble (mapg f e)
+end.
+
 Definition any_ensemble {A} (P: A -> Prop) (e: Ensemble A) := match e with
 |finEnsemble s => any P s
 |infinEnsemble e => anyg P e
 end.
 
-Section EquivalenceG.
-Lemma inEnsemblegQ {A: Type} (s: seq A) x : in_ensembleg s x <-> List.In x s.
-split.
-- by elim: s => [[[//]]|a s IHs [[[|n le eqnx]]] /=]; [by left |  right; apply: IHs; eexists (Ordinal (m:=(n)) _); exact: eqnx].
-- elim: s => // a s IHn [<-|/IHn-[[n le eqnx]]]; by [exists ord0 | eexists (Ordinal (m:=n.+1) _); exact: eqnx].
-Qed.
+Definition union {A: Type} (e e': Ensemble A) := match e, e' with
+|finEnsemble s, finEnsemble s' => finEnsemble (s ++ s')
+|a, b => infinEnsemble (uniong a b)
+end.
 
+Section EquivalenceG.
 Definition correctg {A A': Type} (f: Ensemble A -> Ensemble A') (e: Ensemble A)  := f e ~= f (infinEnsemble e).
 
 Lemma mapg_correct {A A'} (f: A -> A') (e: Ensemble A): correctg (map f) e.
@@ -92,10 +91,6 @@ Proof.
     by apply/nth_map.
 Qed.
 
-Lemma inEnsemblegP {A: eqType} (s: seq A) x : reflect (in_ensembleg s x) (x \in s).
-suff ref: reflect (List.In x s) (x \in s) by apply/(equivP ref)/(iff_sym (inEnsemblegQ _ _ )).
-exact: inP.
-Qed.
 Lemma anyg_correct {A} (P: A -> Prop) (e: Ensemble A) : any_ensemble P e <-> anyg P e.
   case: e => // s.
   split => [|[x [[i]] <-]].
@@ -132,11 +127,6 @@ Proof. split => [[] // <-| [[]] <-]; by [exists tt | left]. Qed.
 
 Lemma  pairg_correct {A: Type} (x y: A): [:: x; y] ~= infinEnsemble (pairg x y).
 Proof. split => [[|[|[]]] -> | [[]] <-]; by [exists true| exists false | left | right; left]. Qed.
-
-Definition union {A: Type} (e e': Ensemble A) := match e, e' with
-|finEnsemble s, finEnsemble s' => finEnsemble (s ++ s')
-|a, b => infinEnsemble (uniong a b)
-end.
 
 Lemma uniong_correct {A: Type} (e e': Ensemble A): union e e' ~= infinEnsemble (uniong e e').
   case: e => // e; case: e' => // e'; split => /= [/nth_safeQ-[sum]|[y <-]];

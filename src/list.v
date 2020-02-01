@@ -1,14 +1,17 @@
 From mathcomp Require Import ssreflect ssrnat fintype ssrbool ssrfun eqtype finfun seq.
 Load reflect_rewrite.
 
+Section List_complement.
 (* Since we work on non-decidable types, we will mainly use List.In *)
 Lemma inP {A: eqType} x (s: seq A): reflect (List.In x s) (x \in s).
 elim: s => [|a l /= Hrec]; first by constructor.
-rewrite in_cons eq_sym; by apply/orTP/predU1P.
+rewrite in_cons eq_sym.
+  by apply/orTP/predU1P.
 Qed.
 
 Fixpoint any_rec {A: Type } (P: A -> Prop) (s: seq A) := if s is x::s' then P x \/ any_rec P s' else False.
 Definition any {A: Type} := nosimpl (any_rec (A:=A)).
+End List_complement.
 
 Section SeqPos.
 (* This section focus on correctly assessed positions of a list. *)
@@ -29,7 +32,7 @@ Proof. by move => /unsplit/(cast_ord (sym_eq (size_cat _ _))). Defined.
 
 (* Useful lemma to assert that a list is not empty, based on a correct position of it *)
 Inductive uncons_spec {A: Type} (s: seq A) (i: 'J_s): forall x (s': seq A), 'J_(x::s') -> Type :=
-|uncons_spec_intro x s' (i': 'J_(x::s')) of 
+|uncons_spec_intro x s' (i': 'J_(x::s')) of
   (forall P, P (x::s') i' -> P s i) & s = (x::s'): uncons_spec s i x s' i'.
 
 Lemma unconsP {A: Type} (s: seq A) i: uncons_spec s i (head_safe s i) (behead s) (seqpos_uncons s i).
@@ -50,7 +53,7 @@ case: n le => [le|n le {HInit}];
   first by rewrite (bool_irrelevance le (ltn_ord ord0)); apply: HInit.
 have ln: n < size s by done.
 pose a := Ordinal ln.
-move: (IHs a) => /(Hrec x) /=; by rewrite (bool_irrelevance le ln).
+by move: (IHs a) => /(Hrec x) /=; rewrite (bool_irrelevance le ln).
 Qed.
 
 Lemma head_correct {A: Type} (s: seq A) x i : head_safe s i = head x s.
@@ -78,7 +81,7 @@ Qed.
 
 Lemma nth_safeP {A: eqType} (s: seq A) (x: A): reflect (exists i, nth_safe s i = x) (x \in s).
   apply/equivP; last exact/nth_safeQ.
-  by apply/inP.
+  exact/inP.
  Qed.
 
 Variant seqpos_split_spec {A: Type} {s s': seq A} (i: 'J_(s ++ s')) : 'J_s + 'J_s' -> bool -> Type :=
@@ -89,8 +92,8 @@ Lemma seqpos_splitP {A: Type} {s s': seq A} (i : 'J_(s ++ s')) : seqpos_split_sp
 Proof.
   have x: A by move: s s' i; do 2!case => [|?]; do 1?case.
   set lt_i_m := i < (size s); rewrite /seqpos_split/split.
-  case: {-}_ lt_i_m / ltnP => jk;
-    constructor; rewrite !(nth_safe_is_nth x) nth_cat; by [rewrite jk|rewrite ltnNge jk].
+  case: {-}_ lt_i_m / ltnP => jk; constructor; rewrite !(nth_safe_is_nth x) nth_cat;
+      by [rewrite jk|rewrite ltnNge jk].
 Qed.
 
 Definition filter_ord {A: Type} p (s: seq A) (i: 'J_(filter p s)): 'J_s.

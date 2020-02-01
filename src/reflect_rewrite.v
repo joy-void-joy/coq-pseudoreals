@@ -17,14 +17,17 @@ Context {b c: bool}.
 
 (* A transformation from props to props is a functor if it only depends on its truth value *)
 Definition functor (H: Prop -> Prop) := forall (Px Qx: Prop), (Px -> Qx) -> H Px -> H Qx.
+Lemma functor_iff H : functor H -> forall Px Qx, (Px <-> Qx) -> (H Px <-> H Qx).
+Proof.
+  move => functor Px Qx iff.
+  split; by apply/functor => /iff.
+Qed.
 
 Lemma functorP {H: Prop -> Prop} (functor: functor H): reflect P b -> reflect (H b) c -> reflect (H P) c.
-move => rpb rhbc.
-case: rhbc => [|nHb]; constructor;
-  first by apply: functor; first exact/rpb.
-move => HP; apply: nHb.
-apply: functor; last exact/HP.
-exact/introT.
+Proof.
+  move => rpb rhbc.
+  apply/equivP; first exact: rhbc.
+  by apply:functor_iff => //; apply: iff_sym; apply: Bool.reflect_iff.
 Qed.
 
 Lemma orT P': functor (or P').
