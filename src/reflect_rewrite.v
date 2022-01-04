@@ -14,25 +14,32 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Section functor.
-Context {P: Prop}.
-Context {b c: bool}.
+Variables (P: Prop) (b c: bool).
+Section DefFunctor.
+Variables (H: Prop -> Prop).
+Definition functor := forall (Px Qx: Prop), (Px -> Qx) -> H Px -> H Qx.
+Hypotheses functor_H: functor.
 
 (* A transformation from props to props is a functor if it only depends on its truth value *)
-Definition functor (H: Prop -> Prop) := forall (Px Qx: Prop), (Px -> Qx) -> H Px -> H Qx.
-Lemma functor_iff H : functor H -> forall Px Qx, (Px <-> Qx) -> (H Px <-> H Qx).
+Lemma functor_iff: forall Px Qx, (Px <-> Qx) -> (H Px <-> H Qx).
 Proof.
-  move => functor Px Qx iff.
-  split; by apply/functor => /iff.
+  move => Px Qx iff.
+  split; by apply/functor_H => /iff.
 Qed.
 
-Lemma functorP {H: Prop -> Prop} (functor: functor H): reflect P b -> reflect (H b) c -> reflect (H P) c.
+Lemma functorP: reflect P b -> reflect (H b) c -> reflect (H P) c.
 Proof.
   move => rpb rhbc.
   apply/equivP; first exact: rhbc.
   by apply:functor_iff => //; apply: iff_sym; apply: Bool.reflect_iff.
 Qed.
+End DefFunctor.
 
-Lemma orT P': functor (or P').
+Lemma functor_or P' : functor (or P').
 Proof. move => Px Qx PxQx; by case; eauto. Qed.
-Definition orTP {P'} := functorP (orT P').
+
+Definition orT P' := functorP (functor_or (P':=P')).
 End functor.
+(* TODO: Do andT and others *)
+
+Check orT.
