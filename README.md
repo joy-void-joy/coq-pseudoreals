@@ -1,4 +1,4 @@
 # coq-pseudoreals
-A formalization of pseudoreal numbers and game theory
+An early attempt to formalize pseudoreals numbers and game theory in Coq.
 
-(This project is still in early prototype phase. Please come by later for the beta)
+For now, it contains specifications about ensembles, meta-ensembles and well-positionned elements in a list.
