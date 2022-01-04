@@ -1,15 +1,17 @@
+From mathcomp Require Import ssreflect ssrbool.
 (* ssrbool's reflect is designed to work on mostly functional predicate.
    As we will be using some inductive predicates, we will need a way to transform ssrbool's lemmas
    about reflection to also hold on properties.
-   This allows us for instance to transform:
+   For now we will use property functor, so instead of using
 
-     orP: reflect (b \/ b') (b || b')
+     `orP: reflect (b \/ b') (b || b')`
 
-  into
 
-    orTP: reflect P b' -> reflect (b \/ P) (b || b').
+  we will use orT which allows us to transform `reflect (P \/ P') c` into `reflect (b \/ P') c` provided `reflect P b`
 *)
-Require Import ssreflect ssrbool.
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Section functor.
 Context {P: Prop}.

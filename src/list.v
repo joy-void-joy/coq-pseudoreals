@@ -1,5 +1,9 @@
 From mathcomp Require Import ssreflect ssrnat fintype ssrbool ssrfun eqtype finfun seq.
-Load reflect_rewrite.
+From Pseudoreals Require Import reflect_rewrite.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Section List_complement.
 (* Since we work on non-decidable types, we will mainly use List.In *)

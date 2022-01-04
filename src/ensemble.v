@@ -1,4 +1,9 @@
-Load list.
+From mathcomp Require Import ssreflect ssrnat seq ssrbool ssrfun eqtype fintype.
+From Pseudoreals Require Import list.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 (* We need our own version of ensembles as images of functions, as the
    standard construction of Coq would violate strict positivity.
